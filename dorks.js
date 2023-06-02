@@ -5,10 +5,10 @@ async function searchGoogleDorks(dorks) {
   const page = await browser.newPage();
   
   const vulnerableSites = [];
+  let urlCount = 0;
   
   for (const dork of dorks) {
-    const searchQuery = `site:${dork}`;
-    const url = `https://www.google.com/search?q=${encodeURIComponent(searchQuery)}`;
+    const url = `https://www.google.com/search?q=${encodeURIComponent(dork)}`;
     
     await page.goto(url);
     
@@ -16,27 +16,30 @@ async function searchGoogleDorks(dorks) {
       const results = Array.from(document.querySelectorAll('.g'));
       return results.map(result => ({
         título: result.querySelector('h3')?.innerText || '',
-        url: result.querySelector('a')?.href || '',
-        descrição: result.querySelector('.st')?.innerText || ''
+          url: result.querySelector('a')?.href || '',
       }));
     });
     
     for (const result of searchResults) {
       vulnerableSites.push(result);
+      urlCount++;
     }
   }
   
   await browser.close();
   
-  return vulnerableSites;
+  return { urls: vulnerableSites, count: urlCount };
 }
 
-// Exemplo de uso
-const dorks = ['inurl:/admin" intitle:"adminlogin', 'inurl:robots.txt', 'inurl:uploadimage.php'];
+//uso
+const dorks = ['inurl:"/admin" intitle:"adminlogin"',
+];
+
 searchGoogleDorks(dorks)
-  .then(results => {
-    console.log('vulneráveis encontrados:');
-    console.log(results);
+  .then(({ urls, count }) => {
+    console.log('URLs vulneráveis encontradas:');
+    console.log(urls);
+    console.log('Total de URLs capturadas:', count);
   })
   .catch(error => {
     console.error('Ocorreu um erro:', error);
